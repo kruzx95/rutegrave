@@ -1,0 +1,19 @@
+{
+  "name": "rutegravel",
+  "version": "1.0.0",
+  "description": "Tasikmalaya Gravel & Mixed-Road Route Navigator & GPX Exporter",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.js",
+    "dev": "npx -y serve -l 3000 ."
+  },
+  "keywords": [
+    "gravel",
+    "cycling",
+    "tasikmalaya",
+    "gpx",
+    "routes"
+  ],
+  "author": "kruza",
+  "license": "MIT"
+}
