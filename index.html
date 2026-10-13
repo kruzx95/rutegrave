@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasikmalaya Gravel Navigator | Mixed-Road Cycling &amp; GPX Exporter</title>
+  <meta name="description" content="Peta dan generator rute sepeda gravel mixed-road di Tasikmalaya, Jawa Barat. Temukan rute makadam Galunggung, Cirahong, Situ Gede, dan Taraju dengan export GPX.">
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Top Application Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon" aria-hidden="true">🚴</div>
+      <div>
+        <h1 class="brand-title">
+          Tasik Gravel
+          <span class="brand-badge">Tasikmalaya</span>
+        </h1>
+        <p class="brand-subtitle">Mixed-Road Cycling &amp; GPX Navigator</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-quick-center" class="map-control-btn" title="Pusatkan peta ke Kota Tasikmalaya" aria-label="Pusatkan Peta">
+        📍 Tasikmalaya
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Container -->
+  <main class="app-workspace">
+
+    <!-- Left Control Deck / Sidebar -->
+    <aside class="app-sidebar" aria-label="Kontrol Rute dan Statistik">
+
+      <!-- Mode Switcher -->
+      <section class="sidebar-section">
+        <div class="section-label">Mode Navigasi</div>
+        <div class="mode-switch" role="tablist">
+          <button id="tab-presets" class="mode-btn active" role="tab" aria-selected="true" aria-controls="panel-presets">
+            📋 Rute Kurasi
+          </button>
+          <button id="tab-custom" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-custom">
+            ✏️ Buat Kustom
+          </button>
+        </div>
+
+        <!-- Presets Selection View -->
+        <div id="panel-presets" role="tabpanel">
+          <div class="preset-list" id="preset-routes-container">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- Custom Route Builder View -->
+        <div id="panel-custom" role="tabpanel" style="display: none;">
+          <div class="builder-controls">
+            <div class="builder-banner">
+              <span>💡</span>
+              <div>
+                <strong>Mode Gambar Aktif:</strong> Klik titik mana saja di peta untuk menambahkan jalur start, via, dan finish.
+              </div>
+            </div>
+            <div class="builder-btn-group">
+              <button id="btn-builder-undo" class="btn-secondary" title="Batalkan titik terakhir" disabled>
+                ↩️ Undo
+              </button>
+              <button id="btn-builder-reverse" class="btn-secondary" title="Balikkan arah rute" disabled>
+                🔄 Balik
+              </button>
+              <button id="btn-builder-clear" class="btn-secondary" title="Hapus semua titik" disabled>
+                🗑️ Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Route Telemetry & Metrics -->
+      <section class="sidebar-section">
+        <div class="section-label">
+          <span>Statistik Rute</span>
+          <span id="route-difficulty-badge" class="preset-badge">Sedang</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Jarak</span>
+            <div class="metric-value">
+              <span id="stat-distance">0.0</span><span class="metric-unit">km</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Elevation Gain</span>
+            <div class="metric-value">
+              <span id="stat-gain">+0</span><span class="metric-unit">m</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Rentang Ketinggian</span>
+            <div class="metric-value">
+              <span id="stat-elevation-range">0 - 0</span><span class="metric-unit">mdpl</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Estimasi Gowes</span>
+            <div class="metric-value">
+              <span id="stat-time">0j 0m</span>
+            </div>
+          </div>
+
+          <div class="metric-card full-width">
+            <span class="metric-label">Rekomendasi Ban</span>
+            <div id="stat-tire" style="font-weight: 600; font-size: 0.95rem; color: var(--accent-amber); margin-top: 2px;">
+              38c - 45c
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Surface Breakdown Section -->
+      <section class="sidebar-section">
+        <div class="section-label">Komposisi Permukaan Jalan</div>
+        <div class="surface-container">
+          <div class="surface-bar" aria-label="Rasio jenis permukaan jalan">
+            <div id="bar-gravel" class="bar-segment segment-gravel" style="width: 40%;" title="Gravel / Makadam"></div>
+            <div id="bar-broken" class="bar-segment segment-broken" style="width: 35%;" title="Aspal Desa Berlubang"></div>
+            <div id="bar-paved" class="bar-segment segment-paved" style="width: 25%;" title="Aspal Halus"></div>
+          </div>
+          <div class="surface-legend">
+            <div class="legend-item">
+              <span class="legend-dot segment-gravel"></span>
+              <span>Gravel/Makadam: <strong id="ratio-gravel">40%</strong></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot segment-broken"></span>
+              <span>Aspal Desa: <strong id="ratio-broken">35%</strong></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot segment-paved"></span>
+              <span>Aspal Mulus: <strong id="ratio-paved">25%</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route Description & Highlights -->
+      <section class="sidebar-section">
+        <div class="section-label">Deskripsi Jalur</div>
+        <p id="route-desc-text" class="route-description">
+          Memuat rute gravel Tasikmalaya...
+        </p>
+        <ul id="route-highlights-list" class="highlights-list">
+          <!-- Populated dynamically -->
+        </ul>
+      </section>
+
+      <!-- Primary Action: Export GPX -->
+      <div class="action-box">
+        <button id="btn-download-gpx" class="btn-primary" aria-label="Download File GPX">
+          <span>💾 Download File GPX (.gpx)</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Map Viewport Container -->
+    <div class="map-viewport-wrapper">
+      <div id="map" role="region" aria-label="Peta Interaktif Jalur Sepeda"></div>
+
+      <!-- Quick Map Floating Controls -->
+      <div class="map-floating-controls">
+        <select id="select-layer" class="layer-select" aria-label="Pilih Lapisan Peta">
+          <option value="cyclosm">🚲 CyclOSM (Jalur Sepeda)</option>
+          <option value="satellite">🛰️ Citra Satelit Esri</option>
+          <option value="topo">⛰️ OpenTopoMap (Kontur)</option>
+          <option value="osm">🗺️ OpenStreetMap Standard</option>
+        </select>
+        <button id="btn-toggle-elevation" class="map-control-btn" title="Buka/Tutup Panel Elevasi">
+          📈 Grafik Elevasi
+        </button>
+      </div>
+
+      <!-- Bottom Elevation Drawer -->
+      <div id="elevation-drawer" class="elevation-drawer">
+        <div class="elevation-header">
+          <div class="elevation-title-box">
+            <span class="elevation-title">Profil Ketinggian Jalur (Elevation Profile)</span>
+            <span id="scrub-telemetry-pill" class="elevation-scrub-info" style="display: none;">
+              Jarak: 0 km | Alt: 0m | Gradient: 0%
+            </span>
+          </div>
+          <button id="btn-close-elevation" class="drawer-toggle-btn" title="Tutup Grafik" aria-label="Tutup Grafik Elevasi">
+            ✕
+          </button>
+        </div>
+        <div id="elevation-chart" class="elevation-chart-container" aria-label="Grafik Ketinggian Jalur">
+          <!-- Rendered via elevationEngine SVG -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Toast Notification Feedback Area -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Leaflet JavaScript library -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Application Main Controller Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
