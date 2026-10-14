@@ -1,13 +1,15 @@
 /**
  * Route Builder Module
  * Allows users to interactively plot and edit custom gravel routes,
- * perform route reversal, undo/redo points, and estimate surface compositions.
+ * perform road-snapping via OpenStreetMap OSRM bicycle routing,
+ * route reversal, undo/redo points, and estimate surface compositions.
  */
 
 import { computeRouteMetrics } from './elevationEngine.js';
 
 export class RouteBuilderState {
   constructor() {
+    this.waypoints = [];
     this.points = [];
     this.history = [];
     this.active = false;
@@ -48,7 +50,10 @@ export class RouteBuilderState {
   }
 
   saveSnapshot() {
-    this.history.push(JSON.parse(JSON.stringify(this.points)));
+    this.history.push({
+      waypoints: JSON.parse(JSON.stringify(this.waypoints)),
+      points: JSON.parse(JSON.stringify(this.points))
+    });
     if (this.history.length > 50) this.history.shift();
   }
 
@@ -60,21 +65,86 @@ export class RouteBuilderState {
       lon: Number(lon),
       ele: Number(finalEle)
     };
+    this.waypoints.push({ lat: Number(lat), lon: Number(lon) });
     this.points.push(newPt);
     return newPt;
   }
 
+  getWaypointsCount() {
+    return this.waypoints.length;
+  }
+
+  /**
+   * Snaps the route to real OpenStreetMap roads using OSRM bicycle routing
+   */
+  async resolveRoadGeometry() {
+    if (this.waypoints.length < 2) {
+      this.points = this.waypoints.map(w => ({
+        lat: w.lat,
+        lon: w.lon,
+        ele: this.estimateElevation(w.lat, w.lon)
+      }));
+      return this.points;
+    }
+
+    try {
+      const coordStr = this.waypoints.map(w => `${w.lon.toFixed(6)},${w.lat.toFixed(6)}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/bicycle/${coordStr}?overview=full&geometries=geojson`;
+      const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined }).then(r => r.json());
+
+      if (res && res.code === 'Ok' && res.routes && res.routes[0]) {
+        const rawCoords = res.routes[0].geometry.coordinates; // [[lon, lat], ...]
+        const step = Math.max(1, Math.floor(rawCoords.length / 450));
+        const snapped = [];
+
+        for (let i = 0; i < rawCoords.length; i += step) {
+          const [lon, lat] = rawCoords[i];
+          snapped.push({
+            lat: Number(lat.toFixed(6)),
+            lon: Number(lon.toFixed(6)),
+            ele: Number(this.estimateElevation(lat, lon).toFixed(1))
+          });
+        }
+
+        const last = rawCoords[rawCoords.length - 1];
+        if (snapped.length === 0 || snapped[snapped.length - 1].lat !== last[1] || snapped[snapped.length - 1].lon !== last[0]) {
+          snapped.push({
+            lat: Number(last[1].toFixed(6)),
+            lon: Number(last[0].toFixed(6)),
+            ele: Number(this.estimateElevation(last[1], last[0]).toFixed(1))
+          });
+        }
+
+        this.points = snapped;
+        return this.points;
+      }
+    } catch (err) {
+      console.warn('OSRM routing fetch failed, falling back to direct waypoints:', err);
+    }
+
+    // Fallback: direct waypoints with elevation
+    this.points = this.waypoints.map(w => ({
+      lat: w.lat,
+      lon: w.lon,
+      ele: this.estimateElevation(w.lat, w.lon)
+    }));
+    return this.points;
+  }
+
   removePoint(index) {
-    if (index >= 0 && index < this.points.length) {
+    if (index >= 0 && index < this.waypoints.length) {
       this.saveSnapshot();
+      this.waypoints.splice(index, 1);
       return this.points.splice(index, 1)[0];
     }
     return null;
   }
 
   updatePoint(index, lat, lon) {
-    if (index >= 0 && index < this.points.length) {
+    if (index >= 0 && index < this.waypoints.length) {
       this.saveSnapshot();
+      this.waypoints[index].lat = Number(lat);
+      this.waypoints[index].lon = Number(lon);
       this.points[index].lat = Number(lat);
       this.points[index].lon = Number(lon);
       this.points[index].ele = this.estimateElevation(lat, lon);
@@ -85,15 +155,18 @@ export class RouteBuilderState {
 
   undo() {
     if (this.history.length > 0) {
-      this.points = this.history.pop();
+      const snap = this.history.pop();
+      this.waypoints = snap.waypoints;
+      this.points = snap.points;
       return true;
     }
     return false;
   }
 
   reverse() {
-    if (this.points.length > 1) {
+    if (this.waypoints.length > 1) {
       this.saveSnapshot();
+      this.waypoints.reverse();
       this.points.reverse();
       return true;
     }
@@ -101,8 +174,9 @@ export class RouteBuilderState {
   }
 
   clear() {
-    if (this.points.length > 0) {
+    if (this.waypoints.length > 0 || this.points.length > 0) {
       this.saveSnapshot();
+      this.waypoints = [];
       this.points = [];
       return true;
     }
@@ -126,7 +200,7 @@ export class RouteBuilderState {
     let pavedCount = 0;
 
     for (const p of this.points) {
-      // Mountainous slopes (elevations > 500m) or riverbeds (< 300m) are mostly gravel/unpaved
+      // Mountainous slopes (elevations > 550m) or riverbeds (< 295m) are mostly gravel/unpaved
       if (p.ele > 550 || p.ele < 295) {
         gravelCount += 2;
         brokenCount += 1;

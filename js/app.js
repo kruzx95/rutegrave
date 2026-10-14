@@ -203,22 +203,28 @@ class GravelApp {
     }
   }
 
-  handleMapClick(e) {
+  async handleMapClick(e) {
     if (!this.isCustomMode) return;
 
     const { lat, lng } = e.latlng;
     this.routeBuilder.addPoint(lat, lng);
 
+    const count = this.routeBuilder.getWaypointsCount();
+    if (count >= 2) {
+      this.showToast(`Menghubungkan ke jalan OpenStreetMap Tasikmalaya...`, 'info');
+    }
+
+    await this.routeBuilder.resolveRoadGeometry();
+
     const customRoute = this.routeBuilder.toRouteObject('Rute Kustom Tasikmalaya', 'Rute buatan pengguna melalui mode Route Builder.');
     this.currentRoute = customRoute;
     this.loadRoute(customRoute);
 
-    const count = this.routeBuilder.getPoints().length;
     this.dom.btnUndo.disabled = count === 0;
     this.dom.btnReverse.disabled = count < 2;
     this.dom.btnClear.disabled = count === 0;
 
-    this.showToast(`Titik ke-${count} ditambahkan`, 'info');
+    this.showToast(`Titik ke-${count} terhubung ke jalan riil!`, 'info');
   }
 
   attachEventListeners() {
@@ -227,12 +233,13 @@ class GravelApp {
     this.dom.tabCustom.addEventListener('click', () => this.setMode('custom'));
 
     // Route Builder Controls
-    this.dom.btnUndo.addEventListener('click', () => {
+    this.dom.btnUndo.addEventListener('click', async () => {
       if (this.routeBuilder.undo()) {
+        await this.routeBuilder.resolveRoadGeometry();
         const customRoute = this.routeBuilder.toRouteObject();
         this.currentRoute = customRoute;
         this.loadRoute(customRoute);
-        const count = this.routeBuilder.getPoints().length;
+        const count = this.routeBuilder.getWaypointsCount();
         this.dom.btnUndo.disabled = count === 0;
         this.dom.btnReverse.disabled = count < 2;
         this.dom.btnClear.disabled = count === 0;
@@ -240,8 +247,9 @@ class GravelApp {
       }
     });
 
-    this.dom.btnReverse.addEventListener('click', () => {
+    this.dom.btnReverse.addEventListener('click', async () => {
       if (this.routeBuilder.reverse()) {
+        await this.routeBuilder.resolveRoadGeometry();
         const customRoute = this.routeBuilder.toRouteObject();
         this.currentRoute = customRoute;
         this.loadRoute(customRoute);
