@@ -180,6 +180,17 @@
         </div>
       </section>
 
+      <!-- Key Gravel Sectors & Climbs (ClimbPro) -->
+      <section class="sidebar-section">
+        <div class="section-label">
+          <span>Sektor Kunci &amp; Tanjakan</span>
+          <span class="brand-badge">ClimbPro</span>
+        </div>
+        <div id="route-sectors-box" class="sectors-container">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
       <!-- Primary Action: Export GPX -->
       <div class="action-box">
         <button id="btn-download-gpx" class="btn-primary" aria-label="Download File GPX">
@@ -213,9 +224,16 @@
       <div id="elevation-drawer" class="elevation-drawer">
         <div class="elevation-header">
           <div class="elevation-title-box">
-            <span class="elevation-title">Profil Ketinggian Jalur (Elevation Profile)</span>
+            <span class="elevation-title">Profil Elevasi &amp; Gradien</span>
+            <div class="elevation-gradient-legend">
+              <span class="legend-chip flat">Landai &lt;4%</span>
+              <span class="legend-chip moderate">4-7%</span>
+              <span class="legend-chip steep">8-11%</span>
+              <span class="legend-chip wall">&gt;12%</span>
+              <span class="legend-chip descent">Turunan</span>
+            </div>
             <span id="scrub-telemetry-pill" class="elevation-scrub-info" style="display: none;">
-              Jarak: 0 km | Alt: 0m | Gradient: 0%
+              Jarak: 0 km | Alt: 0m
             </span>
           </div>
           <button id="btn-close-elevation" class="drawer-toggle-btn" title="Tutup Grafik" aria-label="Tutup Grafik Elevasi">

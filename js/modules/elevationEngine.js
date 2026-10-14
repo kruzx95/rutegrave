@@ -107,18 +107,79 @@ export function computeRouteMetrics(points) {
 }
 
 /**
- * Generates responsive SVG markup representing the elevation profile
+ * Computes smoothed gradient percentage (%) around a given point index using an 80m window
+ */
+export function computeSmoothedGradient(points, index, dists) {
+  if (!Array.isArray(points) || points.length < 2 || index < 0 || index >= points.length) {
+    return 0;
+  }
+
+  let cumulativeDists = dists;
+  if (!Array.isArray(cumulativeDists) || cumulativeDists.length !== points.length) {
+    cumulativeDists = [0];
+    let dAcc = 0;
+    for (let i = 1; i < points.length; i++) {
+      dAcc += calculateDistanceKm(points[i - 1], points[i]);
+      cumulativeDists.push(dAcc);
+    }
+  }
+
+  const targetDist = cumulativeDists[index];
+  const halfWindowKm = 0.08; // 80m on each side
+
+  let iBack = index;
+  while (iBack > 0 && targetDist - cumulativeDists[iBack] < halfWindowKm) {
+    iBack--;
+  }
+
+  let iFwd = index;
+  while (iFwd < points.length - 1 && cumulativeDists[iFwd] - targetDist < halfWindowKm) {
+    iFwd++;
+  }
+
+  const distSpanM = (cumulativeDists[iFwd] - cumulativeDists[iBack]) * 1000;
+  if (distSpanM <= 5) return 0;
+
+  const eleDiff = (points[iFwd].ele || 0) - (points[iBack].ele || 0);
+  const gradePct = (eleDiff / distSpanM) * 100;
+  return Number(gradePct.toFixed(1));
+}
+
+/**
+ * Returns gradient category info and color token
+ */
+export function getGradientCategory(gradePct) {
+  if (gradePct < -1.5) {
+    return { label: 'Turunan', color: '#3498db', textColor: '#ffffff' };
+  }
+  if (gradePct < 4.0) {
+    return { label: 'Landai', color: '#2ecc71', textColor: '#ffffff' };
+  }
+  if (gradePct < 8.0) {
+    return { label: 'Sedang', color: '#f1c40f', textColor: '#121516' };
+  }
+  if (gradePct < 12.0) {
+    return { label: 'Curam', color: '#e67e22', textColor: '#ffffff' };
+  }
+  return { label: 'Ekstrem', color: '#e74c3c', textColor: '#ffffff' };
+}
+
+/**
+ * Generates responsive SVG markup representing the elevation profile with ClimbPro-style gradient visualization
  * @param {Array<{lat: number, lon: number, ele?: number}>} points
  * @param {number} width
  * @param {number} height
+ * @param {Object} [options]
  * @returns {string} SVG HTML string
  */
-export function generateElevationSvg(points, width = 600, height = 140) {
+export function generateElevationSvg(points, width = 600, height = 140, options = {}) {
   if (!Array.isArray(points) || points.length < 2) {
     return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <text x="${width / 2}" y="${height / 2}" fill="#6b7280" font-size="12" text-anchor="middle">Data elevasi belum tersedia</text>
     </svg>`;
   }
+
+  const keySectors = Array.isArray(options.keySectors) ? options.keySectors : [];
 
   // Precompute distances and altitudes
   const dists = [0];
@@ -134,14 +195,13 @@ export function generateElevationSvg(points, width = 600, height = 140) {
     if (ele > maxEle) maxEle = ele;
   }
 
-  const padding = { top: 15, right: 20, bottom: 25, left: 45 };
+  const padding = { top: 22, right: 20, bottom: 25, left: 45 };
   const plotW = width - padding.left - padding.right;
   const plotH = height - padding.top - padding.bottom;
 
-  const eleRange = Math.max(maxEle - minEle, 50);
   const eleMinPadded = Math.max(0, Math.floor((minEle - 20) / 50) * 50);
   const eleMaxPadded = Math.ceil((maxEle + 20) / 50) * 50;
-  const totalEleSpan = eleMaxPadded - eleMinPadded;
+  const totalEleSpan = Math.max(eleMaxPadded - eleMinPadded, 50);
 
   const getX = (d) => padding.left + (d / (totalDist || 1)) * plotW;
   const getY = (ele) => padding.top + plotH - ((ele - eleMinPadded) / totalEleSpan) * plotH;
@@ -154,6 +214,44 @@ export function generateElevationSvg(points, width = 600, height = 140) {
 
   const polylineStr = svgPoints.join(' ');
   const polygonStr = `${padding.left},${padding.top + plotH} ${polylineStr} ${padding.left + plotW},${padding.top + plotH}`;
+
+  // Key sectors highlight overlays
+  const sectorHighlights = keySectors.map((sec) => {
+    const sStart = Math.max(0, sec.startKm || 0);
+    const sEnd = Math.min(totalDist, sec.endKm || totalDist);
+    if (sEnd <= sStart) return '';
+
+    const x1 = Math.max(padding.left, getX(sStart));
+    const x2 = Math.min(padding.left + plotW, getX(sEnd));
+    const secWidth = Math.max(x2 - x1, 4);
+    const midX = x1 + secWidth / 2;
+
+    return `
+      <g class="sector-highlight-band">
+        <rect x="${x1.toFixed(1)}" y="${padding.top}" width="${secWidth.toFixed(1)}" height="${plotH}" fill="rgba(255, 183, 3, 0.12)" stroke="rgba(255, 183, 3, 0.45)" stroke-dasharray="3 3"/>
+        <text x="${midX.toFixed(1)}" y="${padding.top - 6}" fill="#ffb703" font-size="9" font-weight="700" text-anchor="middle">⛰️ ${sec.name.split(' - ')[0].replace('Tanjakan ', '')}</text>
+      </g>
+    `;
+  });
+
+  // ClimbPro bottom gradient color bar (divided into slices)
+  const gradientBars = [];
+  const barHeight = 4;
+  const barY = padding.top + plotH - barHeight;
+  const sliceCount = Math.min(points.length - 1, 80);
+  const sliceStep = Math.max(1, Math.floor(points.length / sliceCount));
+
+  for (let i = 0; i < points.length - 1; i += sliceStep) {
+    const iNext = Math.min(i + sliceStep, points.length - 1);
+    const x1 = getX(dists[i]);
+    const x2 = getX(dists[iNext]);
+    const grade = computeSmoothedGradient(points, i, dists);
+    const cat = getGradientCategory(grade);
+
+    gradientBars.push(`
+      <rect x="${x1.toFixed(1)}" y="${barY}" width="${Math.max(x2 - x1, 1).toFixed(1)}" height="${barHeight}" fill="${cat.color}"/>
+    `);
+  }
 
   // Y-axis grid markers
   const yGridLines = [];
@@ -187,23 +285,45 @@ export function generateElevationSvg(points, width = 600, height = 140) {
       </linearGradient>
     </defs>
     <g class="grid-lines">${yGridLines.join('')}</g>
+    <g class="sector-highlights">${sectorHighlights.join('')}</g>
     <polygon points="${polygonStr}" fill="url(#eleGradient)"/>
     <polyline points="${polylineStr}" fill="none" stroke="#e67e22" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g class="gradient-bars">${gradientBars.join('')}</g>
     <g class="x-labels">${xDistLabels.join('')}</g>
   </svg>`;
 }
 
 /**
- * Finds the closest point and telemetry at a given percentage along the route
+ * Finds the closest point and rich telemetry (distance, elevation, gradient %, and active sector)
  * @param {Array<{lat: number, lon: number, ele?: number}>} points
  * @param {number} fraction (0 to 1)
+ * @param {Array} [keySectors]
  */
-export function getScrubTelemetry(points, fraction) {
+export function getScrubTelemetry(points, fraction, keySectors = []) {
   if (!points || points.length === 0) return null;
   const clamped = Math.max(0, Math.min(1, fraction));
   const idx = Math.min(Math.floor(clamped * points.length), points.length - 1);
+  const pt = points[idx];
+
+  let curKm = 0;
+  for (let i = 1; i <= idx; i++) {
+    curKm += calculateDistanceKm(points[i - 1], points[i]);
+  }
+
+  const gradientPct = computeSmoothedGradient(points, idx);
+  const gradientCategory = getGradientCategory(gradientPct);
+
+  const activeSector =
+    Array.isArray(keySectors) && keySectors.length > 0
+      ? keySectors.find((s) => curKm >= s.startKm && curKm <= s.endKm) || null
+      : null;
+
   return {
-    point: points[idx],
-    index: idx
+    point: pt,
+    index: idx,
+    currentKm: Number(curKm.toFixed(1)),
+    gradientPct,
+    gradientCategory,
+    activeSector
   };
 }

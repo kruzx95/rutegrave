@@ -97,6 +97,8 @@ export class MapManager {
     this.crosshairMarker = null;
     this.directionMarkers = [];
     this.animTimer = null;
+    this.sectorHighlight = null;
+    this.sectorCasing = null;
   }
 
   init(containerId) {
@@ -428,8 +430,64 @@ export class MapManager {
     }
   }
 
+  /**
+   * Highlights a key gravel climb or descent sector on the map with a glowing overlay
+   */
+  highlightSector(points, startKm, endKm) {
+    if (!this.map || !this.L || !Array.isArray(points)) return;
+    this.clearSectorHighlight();
+
+    let curDist = 0;
+    const sectorPoints = [];
+    for (let i = 0; i < points.length; i++) {
+      if (i > 0) curDist += calculateDistanceKm(points[i - 1], points[i]);
+      if (curDist >= startKm && curDist <= endKm) {
+        sectorPoints.push([points[i].lat, points[i].lon]);
+      }
+    }
+
+    if (sectorPoints.length > 1) {
+      // White contrast casing line
+      this.sectorCasing = this.L.polyline(sectorPoints, {
+        color: '#ffffff',
+        weight: 10,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(this.map);
+
+      // Gold highlight line
+      this.sectorHighlight = this.L.polyline(sectorPoints, {
+        color: '#ffb703',
+        weight: 6,
+        opacity: 1.0,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(this.map);
+
+      if (this.sectorHighlight.getBounds) {
+        const bounds = this.sectorHighlight.getBounds();
+        if (bounds && bounds.isValid && bounds.isValid()) {
+          this.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
+      }
+    }
+  }
+
+  clearSectorHighlight() {
+    if (this.sectorCasing && this.map) {
+      this.map.removeLayer(this.sectorCasing);
+      this.sectorCasing = null;
+    }
+    if (this.sectorHighlight && this.map) {
+      this.map.removeLayer(this.sectorHighlight);
+      this.sectorHighlight = null;
+    }
+  }
+
   clearRoute() {
     this.stopAnimation();
+    this.clearSectorHighlight();
     if (!this.map) return;
     if (this.routeCasing) {
       this.map.removeLayer(this.routeCasing);

@@ -10264,6 +10264,34 @@ export const TASIK_GRAVEL_ROUTES = [
         "lon": 108.221568,
         "ele": 403
       }
+    ],
+    "keySectors": [
+      {
+        "id": "sec-sukaratu",
+        "name": "Tanjakan Makadam Sukaratu - Sinagar",
+        "category": "Cat 3 Climb",
+        "startKm": 22,
+        "endKm": 26.5,
+        "lengthKm": 4.5,
+        "elevationGainM": 290,
+        "avgGrade": 6.4,
+        "maxGrade": 12.8,
+        "surface": "Makadam Batu & Pasir Vulkanik",
+        "description": "Tanjakan utama lereng kaki Galunggung dengan batu makadam lepas dan debu vulkanik."
+      },
+      {
+        "id": "sec-leuwisari-descent",
+        "name": "Turunan Sinagar - Leuwisari",
+        "category": "Technical Descent",
+        "startKm": 36,
+        "endKm": 39.5,
+        "lengthKm": 3.5,
+        "elevationGainM": -180,
+        "avgGrade": -5.1,
+        "maxGrade": -9.5,
+        "surface": "Aspal Rusak & Makadam Halus",
+        "description": "Turunan teknis berliku dengan pemandangan lembah sawah terasering."
+      }
     ]
   },
   {
@@ -17166,6 +17194,34 @@ export const TASIK_GRAVEL_ROUTES = [
         "lon": 108.22536,
         "ele": 381
       }
+    ],
+    "keySectors": [
+      {
+        "id": "sec-cirahong-bridge",
+        "name": "Jembatan Cirahong (1893) Dek Kayu",
+        "category": "Heritage Sector",
+        "startKm": 19.5,
+        "endKm": 20.5,
+        "lengthKm": 1,
+        "elevationGainM": 8,
+        "avgGrade": 0.8,
+        "maxGrade": 2.5,
+        "surface": "Bantalan Kayu Rel Kereta Double-Deck",
+        "description": "Sensasi melintasi jembatan peninggalan Belanda di atas jurang Sungai Ciwulan."
+      },
+      {
+        "id": "sec-ciwulan-gravel",
+        "name": "Sektor Gravel Tepian Sungai Ciwulan",
+        "category": "Gravel Sector",
+        "startKm": 24,
+        "endKm": 28.5,
+        "lengthKm": 4.5,
+        "elevationGainM": 65,
+        "avgGrade": 1.4,
+        "maxGrade": 5.5,
+        "surface": "Gravel Batu Kerikil & Tanah Padat",
+        "description": "Lintasan datar di samping aliran sungai yang tenang dan sejuk."
+      }
     ]
   },
   {
@@ -22277,6 +22333,34 @@ export const TASIK_GRAVEL_ROUTES = [
         "lat": -7.326925,
         "lon": 108.221568,
         "ele": 403
+      }
+    ],
+    "keySectors": [
+      {
+        "id": "sec-situ-gede-loop",
+        "name": "Gravel Lingkar Danau Situ Gede",
+        "category": "Scenic Trail",
+        "startKm": 5.5,
+        "endKm": 8.5,
+        "lengthKm": 3,
+        "elevationGainM": 25,
+        "avgGrade": 0.8,
+        "maxGrade": 3.5,
+        "surface": "Tanah Padat & Kerikil Tepi Danau",
+        "description": "Jalur mengitari danau alami dengan kanopi rindang pepohonan hutan kota."
+      },
+      {
+        "id": "sec-kawalu-climb",
+        "name": "Tanjakan Perkebunan Kawalu & Urug",
+        "category": "Punchy Climb",
+        "startKm": 12,
+        "endKm": 15,
+        "lengthKm": 3,
+        "elevationGainM": 145,
+        "avgGrade": 4.8,
+        "maxGrade": 10.5,
+        "surface": "Makadam Kasar Perkebunan Rakyat",
+        "description": "Tanjakan pendek curam membelah kebun bambu dan pohon albasia."
       }
     ]
   },
@@ -40599,6 +40683,47 @@ export const TASIK_GRAVEL_ROUTES = [
         "lat": -7.34999,
         "lon": 108.13001,
         "ele": 496
+      }
+    ],
+    "keySectors": [
+      {
+        "id": "sec-salawu-climb",
+        "name": "Tanjakan Salawu - Tenjowangi",
+        "category": "Cat 2 Climb",
+        "startKm": 14.5,
+        "endKm": 19.5,
+        "lengthKm": 5,
+        "elevationGainM": 310,
+        "avgGrade": 6.2,
+        "maxGrade": 11,
+        "surface": "Aspal Kasar Berlubang & Makadam",
+        "description": "Awal pendakian perbukitan Priangan barat dengan kemiringan konstan."
+      },
+      {
+        "id": "sec-taraju-summit",
+        "name": "Puncak Kebun Teh Taraju (1.020 mdpl)",
+        "category": "Cat 1 HC Climb",
+        "startKm": 21,
+        "endKm": 28.5,
+        "lengthKm": 7.5,
+        "elevationGainM": 480,
+        "avgGrade": 6.4,
+        "maxGrade": 14.8,
+        "surface": "Makadam Bebatuan Kebun Teh",
+        "description": "Klimaks rute menembus hamparan hijau teh Taraju berkabut tebal dan sejuk."
+      },
+      {
+        "id": "sec-bojonggambir-descent",
+        "name": "Turunan Panjang Lembah Bojonggambir",
+        "category": "Highland Descent",
+        "startKm": 36,
+        "endKm": 42,
+        "lengthKm": 6,
+        "elevationGainM": -320,
+        "avgGrade": -5.3,
+        "maxGrade": -11.5,
+        "surface": "Makadam Halus & Aspal Pedesaan",
+        "description": "Turunan panjang berkelok menyusuri lereng lembah teh."
       }
     ]
   }

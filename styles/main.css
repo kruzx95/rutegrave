@@ -607,24 +607,70 @@ body {
 .elevation-title-box {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .elevation-title {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
 }
 
+.elevation-gradient-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.legend-chip::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legend-chip.flat::before { background-color: #2ecc71; }
+.legend-chip.moderate::before { background-color: #f1c40f; }
+.legend-chip.steep::before { background-color: #e67e22; }
+.legend-chip.wall::before { background-color: #e74c3c; }
+.legend-chip.descent::before { background-color: #3498db; }
+
 .elevation-scrub-info {
-  font-size: 0.82rem;
-  color: var(--accent-amber);
-  font-weight: 600;
-  background-color: rgba(230, 126, 34, 0.12);
-  border: 1px solid rgba(230, 126, 34, 0.25);
-  padding: 2px 10px;
+  font-size: 0.80rem;
+  color: #ffb703;
+  font-weight: 700;
+  background-color: #121516;
+  border: 1.5px solid var(--border-subtle);
+  padding: 3px 10px;
   border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scrub-grade-pill {
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
 }
 
 .drawer-toggle-btn {
@@ -893,6 +939,89 @@ body {
   color: var(--text-main);
   font-weight: 500;
   flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Key Gravel Sectors & ClimbPro Cards
+   -------------------------------------------------------------------------- */
+.sectors-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sector-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sector-card:hover {
+  border-color: var(--accent-amber);
+  background-color: var(--bg-surface);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.sector-card.active {
+  border-color: var(--accent-amber);
+  background-color: rgba(255, 183, 3, 0.08);
+}
+
+.sector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sector-title {
+  font-family: var(--font-heading);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sector-cat-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: #2b1704;
+  color: #ffb703;
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  white-space: nowrap;
+}
+
+.sector-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.sector-stat-item strong {
+  color: var(--text-main);
+}
+
+.sector-surface-tag {
+  font-size: 0.70rem;
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.sector-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .map-control-btn.btn-simulasi {

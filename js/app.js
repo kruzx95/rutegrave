@@ -44,6 +44,7 @@ class GravelApp {
       routeDescText: document.getElementById('route-desc-text'),
       routeHighlightsList: document.getElementById('route-highlights-list'),
       routeFlowBox: document.getElementById('route-flow-box'),
+      routeSectorsBox: document.getElementById('route-sectors-box'),
       btnDownloadGpx: document.getElementById('btn-download-gpx'),
       
       layerSelect: document.getElementById('select-layer'),
@@ -173,11 +174,14 @@ class GravelApp {
     // Render Map Polyline
     this.mapManager.renderRoute(route.points);
 
-    // Render Elevation Profile
-    this.renderElevationChart(route.points);
+    // Render Elevation Profile with Key Sectors
+    this.renderElevationChart(route.points, { keySectors: route.keySectors || [] });
 
     // Render Directional Flow Timeline (Pergi & Pulang/Finish)
     this.renderRouteFlow(route);
+
+    // Render Key ClimbPro Gravel Sectors
+    this.renderRouteSectors(route);
   }
 
   renderRouteFlow(route) {
@@ -267,11 +271,64 @@ class GravelApp {
     }
   }
 
-  renderElevationChart(points) {
+  renderRouteSectors(route) {
+    if (!this.dom.routeSectorsBox) return;
+    this.dom.routeSectorsBox.innerHTML = '';
+
+    const sectors = route.keySectors || [];
+    if (!Array.isArray(sectors) || sectors.length === 0) {
+      this.dom.routeSectorsBox.innerHTML = '<div class="flow-step-item">Rute kustom atau belum ada data sektor kunci.</div>';
+      return;
+    }
+
+    sectors.forEach((sec) => {
+      const card = document.createElement('div');
+      card.className = 'sector-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Sektor ${sec.name}`);
+
+      card.innerHTML = `
+        <div class="sector-header">
+          <span class="sector-title">${sec.name}</span>
+          <span class="sector-cat-badge">${sec.category}</span>
+        </div>
+        <div class="sector-stats">
+          <span class="sector-stat-item">📏 <strong>${sec.lengthKm} km</strong></span>
+          <span class="sector-stat-item">📈 Rerata: <strong>${sec.avgGrade > 0 ? '+' : ''}${sec.avgGrade}%</strong></span>
+          <span class="sector-stat-item">🔺 Max: <strong>${sec.maxGrade > 0 ? '+' : ''}${sec.maxGrade}%</strong></span>
+          <span class="sector-stat-item">⛰️ <strong>${sec.elevationGainM > 0 ? '+' : ''}${sec.elevationGainM}m</strong></span>
+        </div>
+        <div class="sector-surface-tag">🪨 ${sec.surface}</div>
+        <div class="sector-desc">${sec.description}</div>
+      `;
+
+      const activateSector = () => {
+        this.mapManager.highlightSector(route.points, sec.startKm, sec.endKm);
+        this.dom.routeSectorsBox.querySelectorAll('.sector-card').forEach((c) => c.classList.remove('active'));
+        card.classList.add('active');
+        this.dom.elevationDrawer.classList.remove('collapsed');
+        this.showToast(`Sektor disorot: ${sec.name} (${sec.startKm} - ${sec.endKm} km)`, 'info');
+      };
+
+      card.addEventListener('click', activateSector);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activateSector();
+        }
+      });
+
+      this.dom.routeSectorsBox.appendChild(card);
+    });
+  }
+
+  renderElevationChart(points, options = {}) {
     if (!this.dom.elevationChart) return;
     const width = this.dom.elevationChart.clientWidth || 650;
     const height = 110;
-    this.dom.elevationChart.innerHTML = generateElevationSvg(points, width, height);
+    const chartOpts = options.keySectors ? options : { keySectors: this.currentRoute?.keySectors || [] };
+    this.dom.elevationChart.innerHTML = generateElevationSvg(points, width, height, chartOpts);
   }
 
   setMode(mode) {
@@ -410,14 +467,23 @@ class GravelApp {
         this.mapManager.animateRouteFlow(
           this.currentRoute.points,
           (idx, pt, isDone) => {
-            const subPts = this.currentRoute.points.slice(0, idx + 1);
-            const metrics = computeRouteMetrics(subPts);
-            const curKm = metrics.totalDistanceKm;
+            const fraction = idx / Math.max(1, this.currentRoute.points.length - 1);
+            const scrubData = getScrubTelemetry(this.currentRoute.points, fraction, this.currentRoute.keySectors);
+            const totalDist = this.currentRoute.distanceKm || computeRouteMetrics(this.currentRoute.points).totalDistanceKm;
+            const curKm = scrubData ? scrubData.currentKm : 0;
             const isOutbound = curKm <= totalDist / 2;
-            const phase = isOutbound ? '🟢 Jalur Pergi' : '🏁 Menuju Finish';
+            const phase = isOutbound ? '🟢 Pergi' : '🏁 Finish';
+            const cat = scrubData?.gradientCategory || { color: '#2ecc71', textColor: '#ffffff' };
+            const sectorText = scrubData?.activeSector ? ` | ⛰️ <span style="color:#ffb703;">${scrubData.activeSector.name}</span>` : '';
 
-            this.dom.scrubPill.style.display = 'inline-block';
-            this.dom.scrubPill.textContent = `🚴 ${curKm.toFixed(1)} / ${totalDist.toFixed(1)} km | ${Math.round(pt.ele || 0)} mdpl | ${phase}`;
+            this.dom.scrubPill.style.display = 'inline-flex';
+            this.dom.scrubPill.innerHTML = `
+              <span>🚴 ${curKm} / ${totalDist.toFixed(1)} km</span>
+              <span>⛰️ ${Math.round(pt.ele || 0)}m</span>
+              <span class="scrub-grade-pill" style="background-color: ${cat.color}; color: ${cat.textColor};">${scrubData?.gradientPct > 0 ? '+' : ''}${scrubData?.gradientPct}%</span>
+              <span>[${phase}]</span>
+              ${sectorText}
+            `;
           },
           () => {
             this.dom.btnAnimateRoute.textContent = '▶ Putar Arah Gowes';
@@ -441,15 +507,22 @@ class GravelApp {
       if (!this.currentRoute || !this.currentRoute.points || this.currentRoute.points.length < 2) return;
       const rect = chartEl.getBoundingClientRect();
       const fraction = (clientX - rect.left) / rect.width;
-      const scrubData = getScrubTelemetry(this.currentRoute.points, fraction);
+      const scrubData = getScrubTelemetry(this.currentRoute.points, fraction, this.currentRoute.keySectors);
 
       if (scrubData && scrubData.point) {
         const { lat, lon, ele } = scrubData.point;
         this.mapManager.setCrosshairPosition(lat, lon);
 
-        const metrics = computeRouteMetrics(this.currentRoute.points.slice(0, scrubData.index + 1));
-        this.dom.scrubPill.style.display = 'inline-block';
-        this.dom.scrubPill.textContent = `Jarak: ${metrics.totalDistanceKm.toFixed(1)} km | Alt: ${Math.round(ele)} mdpl`;
+        const cat = scrubData.gradientCategory || { color: '#2ecc71', textColor: '#ffffff' };
+        const sectorText = scrubData.activeSector ? ` | ⛰️ <span style="color:#ffb703;">${scrubData.activeSector.name}</span>` : '';
+
+        this.dom.scrubPill.style.display = 'inline-flex';
+        this.dom.scrubPill.innerHTML = `
+          <span>📏 ${scrubData.currentKm} km</span>
+          <span>⛰️ ${Math.round(ele)}m</span>
+          <span class="scrub-grade-pill" style="background-color: ${cat.color}; color: ${cat.textColor};">${scrubData.gradientPct > 0 ? '+' : ''}${scrubData.gradientPct}%</span>
+          ${sectorText}
+        `;
       }
     };
 
