@@ -43,10 +43,12 @@ class GravelApp {
       
       routeDescText: document.getElementById('route-desc-text'),
       routeHighlightsList: document.getElementById('route-highlights-list'),
+      routeFlowBox: document.getElementById('route-flow-box'),
       btnDownloadGpx: document.getElementById('btn-download-gpx'),
       
       layerSelect: document.getElementById('select-layer'),
       btnQuickCenter: document.getElementById('btn-quick-center'),
+      btnAnimateRoute: document.getElementById('btn-animate-route'),
       btnToggleElevation: document.getElementById('btn-toggle-elevation'),
       btnCloseElevation: document.getElementById('btn-close-elevation'),
       elevationDrawer: document.getElementById('elevation-drawer'),
@@ -112,6 +114,13 @@ class GravelApp {
   }
 
   selectPreset(route) {
+    if (this.mapManager.isAnimating()) {
+      this.mapManager.stopAnimation();
+      if (this.dom.btnAnimateRoute) {
+        this.dom.btnAnimateRoute.textContent = '▶ Putar Arah Gowes';
+        this.dom.btnAnimateRoute.classList.remove('active');
+      }
+    }
     if (this.isCustomMode) {
       this.setMode('presets');
     }
@@ -166,6 +175,96 @@ class GravelApp {
 
     // Render Elevation Profile
     this.renderElevationChart(route.points);
+
+    // Render Directional Flow Timeline (Pergi & Pulang/Finish)
+    this.renderRouteFlow(route);
+  }
+
+  renderRouteFlow(route) {
+    if (!this.dom.routeFlowBox) return;
+    this.dom.routeFlowBox.innerHTML = '';
+
+    if (!route || !Array.isArray(route.points) || route.points.length === 0) {
+      this.dom.routeFlowBox.innerHTML = '<div class="flow-step-item">Belum ada titik rute.</div>';
+      return;
+    }
+
+    const totalDist = route.distanceKm || computeRouteMetrics(route.points).totalDistanceKm;
+    const halfDist = totalDist / 2;
+
+    let itinerary = route.itinerary;
+    if (!Array.isArray(itinerary) || itinerary.length === 0) {
+      itinerary = [
+        { km: '0 km', label: 'Start: Titik Awal Gowes' },
+        { km: `${halfDist.toFixed(1)} km`, label: 'Titik Balik Jalur (Midpoint)' },
+        { km: `${totalDist.toFixed(1)} km`, label: 'Finish: Titik Akhir Gowes' }
+      ];
+    }
+
+    const outboundSteps = [];
+    const inboundSteps = [];
+
+    itinerary.forEach((step) => {
+      const kmNum = parseFloat(step.km) || 0;
+      if (kmNum <= halfDist) {
+        outboundSteps.push({ ...step, kmNum, isOutbound: true });
+      } else {
+        inboundSteps.push({ ...step, kmNum, isOutbound: false });
+      }
+    });
+
+    const createStepElement = (step) => {
+      const row = document.createElement('div');
+      row.className = 'flow-step-item';
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      row.setAttribute('aria-label', `${step.label} pada kilometer ${step.km}`);
+
+      const badgeClass = step.isOutbound ? 'outbound' : 'inbound';
+      row.innerHTML = `
+        <span class="flow-step-badge ${badgeClass}">${step.km}</span>
+        <span class="flow-step-name">${step.label}</span>
+      `;
+
+      const activatePoint = () => {
+        const ptObj = this.mapManager.findPointAtKm(route.points, step.kmNum);
+        if (ptObj && ptObj.point) {
+          this.mapManager.setCrosshairPosition(ptObj.point.lat, ptObj.point.lon);
+          if (this.map) {
+            this.map.panTo([ptObj.point.lat, ptObj.point.lon]);
+          }
+          this.dom.scrubPill.style.display = 'inline-block';
+          this.dom.scrubPill.textContent = `${step.label} (${step.km}) | Alt: ${Math.round(ptObj.point.ele || 0)} mdpl`;
+          this.showToast(`Titik: ${step.label}`, 'info');
+        }
+      };
+
+      row.addEventListener('click', activatePoint);
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activatePoint();
+        }
+      });
+
+      return row;
+    };
+
+    if (outboundSteps.length > 0) {
+      const outCard = document.createElement('div');
+      outCard.className = 'flow-phase-card';
+      outCard.innerHTML = `<div class="flow-phase-title outbound"><span>🟢 Jalur Berangkat (Pergi)</span><span>0 - ${Math.round(halfDist)} km</span></div>`;
+      outboundSteps.forEach((s) => outCard.appendChild(createStepElement(s)));
+      this.dom.routeFlowBox.appendChild(outCard);
+    }
+
+    if (inboundSteps.length > 0) {
+      const inCard = document.createElement('div');
+      inCard.className = 'flow-phase-card';
+      inCard.innerHTML = `<div class="flow-phase-title inbound"><span>🏁 Jalur Menuju Finish</span><span>${Math.round(halfDist)} - ${Math.round(totalDist)} km</span></div>`;
+      inboundSteps.forEach((s) => inCard.appendChild(createStepElement(s)));
+      this.dom.routeFlowBox.appendChild(inCard);
+    }
   }
 
   renderElevationChart(points) {
@@ -285,6 +384,49 @@ class GravelApp {
       this.mapManager.centerOnTasikmalaya();
       this.showToast('Pusat peta diarahkan ke Alun-alun Kota Tasikmalaya', 'info');
     });
+
+    // Simulasi Arah Gowes Animation
+    if (this.dom.btnAnimateRoute) {
+      this.dom.btnAnimateRoute.addEventListener('click', () => {
+        if (!this.currentRoute || !this.currentRoute.points || this.currentRoute.points.length < 2) {
+          this.showToast('Belum ada jalur rute untuk disimulasikan.', 'error');
+          return;
+        }
+
+        if (this.mapManager.isAnimating()) {
+          this.mapManager.stopAnimation();
+          this.dom.btnAnimateRoute.textContent = '▶ Putar Arah Gowes';
+          this.dom.btnAnimateRoute.classList.remove('active');
+          this.showToast('Simulasi arah gowes dihentikan', 'info');
+          return;
+        }
+
+        this.dom.btnAnimateRoute.textContent = '⏹ Hentikan';
+        this.dom.btnAnimateRoute.classList.add('active');
+        this.dom.elevationDrawer.classList.remove('collapsed');
+
+        const totalDist = this.currentRoute.distanceKm || computeRouteMetrics(this.currentRoute.points).totalDistanceKm;
+
+        this.mapManager.animateRouteFlow(
+          this.currentRoute.points,
+          (idx, pt, isDone) => {
+            const subPts = this.currentRoute.points.slice(0, idx + 1);
+            const metrics = computeRouteMetrics(subPts);
+            const curKm = metrics.totalDistanceKm;
+            const isOutbound = curKm <= totalDist / 2;
+            const phase = isOutbound ? '🟢 Jalur Pergi' : '🏁 Menuju Finish';
+
+            this.dom.scrubPill.style.display = 'inline-block';
+            this.dom.scrubPill.textContent = `🚴 ${curKm.toFixed(1)} / ${totalDist.toFixed(1)} km | ${Math.round(pt.ele || 0)} mdpl | ${phase}`;
+          },
+          () => {
+            this.dom.btnAnimateRoute.textContent = '▶ Putar Arah Gowes';
+            this.dom.btnAnimateRoute.classList.remove('active');
+            this.showToast('Simulasi selesai mencapai garis Finish!', 'info');
+          }
+        );
+      });
+    }
 
     // Elevation Drawer Toggle
     const toggleDrawer = () => {

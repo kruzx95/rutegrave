@@ -26,6 +26,28 @@ export const TASIK_GRAVEL_ROUTES = [
       "Koridor jalan pedesaan Cisinga diapit terasering sawah Cisayong",
       "Spot istirahat di warung kopi Cipanas & Leuwisari"
     ],
+    "itinerary": [
+      {
+        "km": "0 km",
+        "label": "Start: Alun-alun Kota Tasikmalaya"
+      },
+      {
+        "km": "14 km",
+        "label": "Indihiang ➔ Koridor Baru Cisinga"
+      },
+      {
+        "km": "26 km",
+        "label": "Cisayong ➔ Sukaratu (Kaki Galunggung, Makadam & Pasir)"
+      },
+      {
+        "km": "40 km",
+        "label": "Leuwisari ➔ Singaparna Utara (Turunan)"
+      },
+      {
+        "km": "52 km",
+        "label": "Finish: Mangkubumi ➔ Alun-alun Tasikmalaya"
+      }
+    ],
     "points": [
       {
         "lat": -7.327678,
@@ -2601,6 +2623,28 @@ export const TASIK_GRAVEL_ROUTES = [
       "Lanskap persawahan Manonjaya yang asri dan tenang",
       "Jalur perkampungan ramah pesepeda tanpa kebisingan kota"
     ],
+    "itinerary": [
+      {
+        "km": "0 km",
+        "label": "Start: Kompleks Dadaha Tasikmalaya"
+      },
+      {
+        "km": "12 km",
+        "label": "Cibeureum ➔ Persawahan Manonjaya"
+      },
+      {
+        "km": "20 km",
+        "label": "Jembatan Cirahong (1893) Dek Kayu"
+      },
+      {
+        "km": "28 km",
+        "label": "Tepian Sungai Ciwulan ➔ Cimaragas (Gravel)"
+      },
+      {
+        "km": "39 km",
+        "label": "Finish: UNSIL Cilolohan ➔ Dadaha"
+      }
+    ],
     "points": [
       {
         "lat": -7.334802,
@@ -4915,6 +4959,28 @@ export const TASIK_GRAVEL_ROUTES = [
       "Rindang hutan bambu dan perkebunan rakyat Mangkubumi",
       "Panorama perbukitan Kawalu dari ketinggian",
       "Banyak warung lokal untuk sarapan bubur/kupat tahu khas Tasik"
+    ],
+    "itinerary": [
+      {
+        "km": "0 km",
+        "label": "Start: Alun-alun Kota Tasikmalaya"
+      },
+      {
+        "km": "6 km",
+        "label": "Sambong ➔ Jalur Lingkar Danau Situ Gede"
+      },
+      {
+        "km": "14 km",
+        "label": "Mangkubumi ➔ Puncak Bukit Kawalu/Urug (Makadam)"
+      },
+      {
+        "km": "20 km",
+        "label": "Turunan Perkebunan ➔ Cisalak"
+      },
+      {
+        "km": "25 km",
+        "label": "Finish: Kembali ke Alun-alun Kota"
+      }
     ],
     "points": [
       {
@@ -7445,6 +7511,28 @@ export const TASIK_GRAVEL_ROUTES = [
       "Makadam bebatuan khas jalan kebun teh pegunungan",
       "Ketinggian di atas 1.000 mdpl dengan udara sangat segar",
       "Turunan panjang berliku dengan panorama lembah Cilawu"
+    ],
+    "itinerary": [
+      {
+        "km": "0 km",
+        "label": "Start: Alun-alun Singaparna"
+      },
+      {
+        "km": "15 km",
+        "label": "Salawu ➔ Tenjowangi (Awal Tanjakan)"
+      },
+      {
+        "km": "28 km",
+        "label": "Puncak Kebun Teh Taraju (1.020 mdpl, Makadam)"
+      },
+      {
+        "km": "42 km",
+        "label": "Punggung Bukit Bojonggambir ➔ Turunan Puspahiang"
+      },
+      {
+        "km": "56 km",
+        "label": "Finish: Mangunreja ➔ Kembali ke Singaparna"
+      }
     ],
     "points": [
       {

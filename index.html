@@ -169,6 +169,17 @@
         </ul>
       </section>
 
+      <!-- Route Flow & Directional Itinerary -->
+      <section class="sidebar-section">
+        <div class="section-label">
+          <span>Arah &amp; Alur Rute</span>
+          <span class="brand-badge">Start ➔ Finish</span>
+        </div>
+        <div id="route-flow-box" class="route-flow-container">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
       <!-- Primary Action: Export GPX -->
       <div class="action-box">
         <button id="btn-download-gpx" class="btn-primary" aria-label="Download File GPX">
@@ -190,6 +201,9 @@
           <option value="topo">⛰️ OpenTopoMap (Kontur)</option>
           <option value="osm">🗺️ OpenStreetMap Standard</option>
         </select>
+        <button id="btn-animate-route" class="map-control-btn btn-simulasi" title="Simulasi alur arah gowes dari start ke finish" aria-label="Simulasi Arah Gowes">
+          ▶ Putar Arah Gowes
+        </button>
         <button id="btn-toggle-elevation" class="map-control-btn" title="Buka/Tutup Panel Elevasi">
           📈 Grafik Elevasi
         </button>

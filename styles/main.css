@@ -677,12 +677,234 @@ body {
 }
 
 .pin-finish {
-  background-color: #2c3e50;
+  background-color: #c0392b;
+}
+
+.pin-loop {
+  background: linear-gradient(135deg, var(--accent-green) 50%, #c0392b 50%);
+}
+
+/* Loop Start & Finish Unified Pill */
+.route-loop-badge-icon {
+  background: transparent;
+  border: none;
+}
+
+.pin-loop-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #121516;
+  border: 2px solid #ffb703;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.75);
+}
+
+.loop-tag-start {
+  color: #2ecc71;
+}
+
+.loop-divider {
+  color: #8c9ba5;
+  font-size: 0.75rem;
+}
+
+.loop-tag-finish {
+  color: #ff6b6b;
+}
+
+/* Guide Badges (Depart / Approach) */
+.route-guide-icon {
+  background: transparent;
+  border: none;
+}
+
+.badge-flow-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-size: 0.70rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+  background-color: #121516;
+}
+
+.badge-flow-guide.depart {
+  color: #2ecc71;
+  border: 1.5px solid #2ecc71;
+}
+
+.badge-flow-guide.approach {
+  color: #ffb703;
+  border: 1.5px solid #ffb703;
 }
 
 .pin-crosshair {
   background-color: var(--accent-amber);
   animation: pulse-pin 1.2s infinite alternate;
+}
+
+/* Direction Chevrons & Milestones on Map */
+.route-dir-icon {
+  background: transparent;
+  border: none;
+}
+
+.dir-arrow-wrapper {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
+  transition: transform 0.2s ease;
+}
+
+.dir-arrow-wrapper svg {
+  display: block;
+}
+
+.route-milestone-icon {
+  background: transparent;
+  border: none;
+}
+
+.milestone-badge {
+  background-color: #121516;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 800;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.75);
+  letter-spacing: -0.02em;
+  transition: transform 0.15s ease;
+}
+
+.milestone-badge:hover {
+  transform: scale(1.15);
+}
+
+.milestone-badge.outbound {
+  color: #2ecc71;
+  border: 2px solid #2ecc71;
+  background-color: #0d2818;
+}
+
+.milestone-badge.inbound {
+  color: #ffb703;
+  border: 2px solid #ffb703;
+  background-color: #2b1704;
+}
+
+/* Sidebar Flow Breadcrumbs */
+.route-flow-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.flow-phase-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.flow-phase-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-phase-title.outbound {
+  color: #2ecc71;
+}
+
+.flow-phase-title.inbound {
+  color: #ffb703;
+}
+
+.flow-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.flow-step-item:hover {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  transform: translateX(3px);
+}
+
+.flow-step-badge {
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  min-width: 48px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.flow-step-badge.outbound {
+  color: #2ecc71;
+  border-color: rgba(46, 204, 113, 0.4);
+}
+
+.flow-step-badge.inbound {
+  color: #ffb703;
+  border-color: rgba(255, 183, 3, 0.4);
+}
+
+.flow-step-name {
+  color: var(--text-main);
+  font-weight: 500;
+  flex: 1;
+}
+
+.map-control-btn.btn-simulasi {
+  color: var(--accent-amber);
+  border-color: rgba(255, 183, 3, 0.4);
+}
+
+.map-control-btn.btn-simulasi.active {
+  background-color: var(--accent-amber);
+  color: #121516;
+  font-weight: 700;
+  border-color: #ffffff;
 }
 
 @keyframes pulse-pin {
