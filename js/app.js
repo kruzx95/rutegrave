@@ -7,6 +7,7 @@ import { RouteBuilderState } from './modules/routeBuilder.js';
 import { TASIK_GRAVEL_ROUTES } from './data/routes.js';
 import { downloadGpxFile } from './modules/gpxExporter.js';
 import { computeRouteMetrics, generateElevationSvg, getScrubTelemetry } from './modules/elevationEngine.js';
+import { parseGpxXml, gpxToRouteObject } from './modules/gpxImporter.js';
 
 class GravelApp {
   constructor() {
@@ -20,8 +21,17 @@ class GravelApp {
       presetContainer: document.getElementById('preset-routes-container'),
       panelPresets: document.getElementById('panel-presets'),
       panelCustom: document.getElementById('panel-custom'),
+      panelImport: document.getElementById('panel-import'),
       tabPresets: document.getElementById('tab-presets'),
       tabCustom: document.getElementById('tab-custom'),
+      tabImport: document.getElementById('tab-import'),
+      
+      gpxDropzone: document.getElementById('gpx-dropzone'),
+      gpxFileInput: document.getElementById('gpx-file-input'),
+      btnBrowseGpx: document.getElementById('btn-browse-gpx'),
+      importStatusBox: document.getElementById('import-status-box'),
+      importStatusTitle: document.getElementById('import-status-title'),
+      importStatusDesc: document.getElementById('import-status-desc'),
       
       btnUndo: document.getElementById('btn-builder-undo'),
       btnReverse: document.getElementById('btn-builder-reverse'),
@@ -334,11 +344,13 @@ class GravelApp {
   setMode(mode) {
     this.isCustomMode = mode === 'custom';
 
-    if (this.isCustomMode) {
+    if (mode === 'custom') {
       this.dom.tabPresets.classList.remove('active');
       this.dom.tabCustom.classList.add('active');
+      this.dom.tabImport.classList.remove('active');
       this.dom.panelPresets.style.display = 'none';
       this.dom.panelCustom.style.display = 'block';
+      this.dom.panelImport.style.display = 'none';
 
       this.routeBuilder.clear();
       this.mapManager.clearRoute();
@@ -349,14 +361,64 @@ class GravelApp {
       this.currentRoute = this.routeBuilder.toRouteObject();
       this.loadRoute(this.currentRoute);
       this.showToast('Mode Gambar Aktif: Klik peta untuk membuat titik jalur rute kustom Anda!', 'info');
+    } else if (mode === 'import') {
+      this.dom.tabPresets.classList.remove('active');
+      this.dom.tabCustom.classList.remove('active');
+      this.dom.tabImport.classList.add('active');
+      this.dom.panelPresets.style.display = 'none';
+      this.dom.panelCustom.style.display = 'none';
+      this.dom.panelImport.style.display = 'block';
+
+      this.showToast('Mode Impor GPX: Tarik & lepas file .gpx atau klik tombol pilih berkas.', 'info');
     } else {
       this.dom.tabPresets.classList.add('active');
       this.dom.tabCustom.classList.remove('active');
+      this.dom.tabImport.classList.remove('active');
       this.dom.panelPresets.style.display = 'block';
       this.dom.panelCustom.style.display = 'none';
+      this.dom.panelImport.style.display = 'none';
 
       this.selectPreset(TASIK_GRAVEL_ROUTES[0]);
     }
+  }
+
+  handleGpxFile(file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.gpx') && file.type !== 'application/gpx+xml') {
+      this.showToast('Harap pilih berkas dengan format .gpx', 'error');
+      return;
+    }
+
+    this.showToast(`Membaca berkas ${file.name}...`, 'info');
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const xmlStr = e.target.result;
+        const parsedData = parseGpxXml(xmlStr);
+        const importedRoute = gpxToRouteObject(parsedData, (lat, lon) => this.routeBuilder.estimateElevation(lat, lon));
+
+        this.currentRoute = importedRoute;
+        this.loadRoute(importedRoute);
+
+        if (this.dom.importStatusBox) {
+          this.dom.importStatusBox.style.display = 'flex';
+          this.dom.importStatusTitle.textContent = importedRoute.name;
+          this.dom.importStatusDesc.textContent = `${importedRoute.points.length} titik koordinat | ${importedRoute.distanceKm} km | +${importedRoute.elevationGainM}m gain`;
+        }
+
+        this.showToast(`Berhasil mengimpor rute: ${importedRoute.name}!`, 'success');
+      } catch (err) {
+        console.error(err);
+        this.showToast(`Gagal membaca file GPX: ${err.message}`, 'error');
+      }
+    };
+
+    reader.onerror = () => {
+      this.showToast('Gagal membuka berkas dari perangkat.', 'error');
+    };
+
+    reader.readAsText(file);
   }
 
   async handleMapClick(e) {
@@ -387,6 +449,53 @@ class GravelApp {
     // Mode Switching
     this.dom.tabPresets.addEventListener('click', () => this.setMode('presets'));
     this.dom.tabCustom.addEventListener('click', () => this.setMode('custom'));
+    if (this.dom.tabImport) {
+      this.dom.tabImport.addEventListener('click', () => this.setMode('import'));
+    }
+
+    // GPX Dropzone and File Picker
+    if (this.dom.btnBrowseGpx && this.dom.gpxFileInput) {
+      this.dom.btnBrowseGpx.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.dom.gpxFileInput.click();
+      });
+    }
+
+    if (this.dom.gpxDropzone && this.dom.gpxFileInput) {
+      this.dom.gpxDropzone.addEventListener('click', () => {
+        this.dom.gpxFileInput.click();
+      });
+
+      this.dom.gpxFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          this.handleGpxFile(e.target.files[0]);
+        }
+      });
+
+      const dropzone = this.dom.gpxDropzone;
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt && dt.files && dt.files[0]) {
+          this.handleGpxFile(dt.files[0]);
+        }
+      });
+    }
 
     // Route Builder Controls
     this.dom.btnUndo.addEventListener('click', async () => {

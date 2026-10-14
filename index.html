@@ -54,6 +54,9 @@
           <button id="tab-custom" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-custom">
             ✏️ Buat Kustom
           </button>
+          <button id="tab-import" class="mode-btn" role="tab" aria-selected="false" aria-controls="panel-import">
+            📂 Impor GPX
+          </button>
         </div>
 
         <!-- Presets Selection View -->
@@ -83,6 +86,27 @@
                 🗑️ Reset
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- GPX Import Dropzone View -->
+        <div id="panel-import" role="tabpanel" style="display: none;">
+          <div id="gpx-dropzone" class="gpx-dropzone" role="region" aria-label="Area Unggah Berkas GPX" tabindex="0">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-title">Tarik &amp; Lepas File .gpx ke Sini</div>
+            <div class="dropzone-subtitle">atau klik tombol di bawah untuk memilih berkas dari perangkat</div>
+            <input type="file" id="gpx-file-input" accept=".gpx,application/gpx+xml,text/xml" style="display: none;" />
+            <button id="btn-browse-gpx" class="btn-secondary" type="button">
+              📂 Pilih File GPX
+            </button>
+            <div class="dropzone-hint">Mendukung file GPX dari Garmin, Wahoo, Strava, Komoot, dan OsmAnd.</div>
+          </div>
+          <div id="import-status-box" class="import-status-box" style="display: none;">
+            <div class="import-status-header">
+              <span class="import-status-icon">✅</span>
+              <strong id="import-status-title">File berhasil dimuat</strong>
+            </div>
+            <div id="import-status-desc" class="import-status-desc"></div>
           </div>
         </div>
       </section>

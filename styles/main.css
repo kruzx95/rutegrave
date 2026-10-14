@@ -169,7 +169,7 @@ body {
 /* Mode Switch Tabs */
 .mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   background-color: var(--bg-base);
   border-radius: var(--radius-md);
   padding: 4px;
@@ -185,13 +185,15 @@ body {
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  padding: 4px 6px;
+  white-space: nowrap;
   transition: all var(--transition-fast);
 }
 
@@ -336,6 +338,87 @@ body {
 .btn-secondary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* GPX Dropzone Import Panel */
+.gpx-dropzone {
+  border: 2px dashed var(--border-highlight);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 24px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  outline: none;
+}
+
+.gpx-dropzone:hover,
+.gpx-dropzone:focus-visible {
+  border-color: var(--accent-amber);
+  background-color: rgba(255, 183, 3, 0.04);
+}
+
+.gpx-dropzone.dragover {
+  border-color: var(--accent-amber);
+  background-color: rgba(255, 183, 3, 0.12);
+  transform: scale(1.02);
+  box-shadow: 0 0 16px rgba(255, 183, 3, 0.25);
+}
+
+.dropzone-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.dropzone-title {
+  font-family: var(--font-heading);
+  font-size: 0.90rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.dropzone-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  max-width: 240px;
+  line-height: 1.35;
+}
+
+.dropzone-hint {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.import-status-box {
+  margin-top: 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-status-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--accent-green);
+}
+
+.import-status-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 /* Telemetry Metrics Grid */
